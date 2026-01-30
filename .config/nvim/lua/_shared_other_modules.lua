@@ -64,7 +64,8 @@ return {
                     'rust_analyzer',
                     'lua_ls',
                     'ts_ls',
-                    'vue_ls'
+                    'vue_ls',
+                    'fsharp'
                 }
             }
 
@@ -111,6 +112,8 @@ return {
                 end,
             })
 
+
+            vim.lsp.config('fsharp', {})
 
             vim.lsp.config('rust-analyzer', {
                 -- vim.lsp.config('rust_analyzer', {

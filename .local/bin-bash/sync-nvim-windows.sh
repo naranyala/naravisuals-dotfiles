@@ -1,7 +1,7 @@
-#!/usr/bin/bash 
+#!/usr/bin/bash
 
 echo "delete ~/.config/nvim ..."
-rm -rf ~/.config/nvim 
+rm -rf ~/.config/nvim
 
 echo "symlink neovim ..."
-/d/projects-remote/modular-dotfiles/.local/create-symlinks/symlink-nvim.sh
+/d/projects-remote/naravisuals-dotfiles/.local/create-symlinks/symlink-nvim.sh

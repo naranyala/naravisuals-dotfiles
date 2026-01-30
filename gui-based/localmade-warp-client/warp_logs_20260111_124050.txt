@@ -1,0 +1,85 @@
+=== Warp VPN Client Logs ===
+Exported: 2026-01-11 12:40:50
+
+[12:40:29] INFO: Warp VPN Client starting | Initializing compact GUI layout
+[12:40:30] INFO: Status checking thread started
+[12:40:30] SUCCESS: Application started | Compact GUI initialized successfully
+[12:40:30] INFO: Starting main GUI loop
+[12:40:30] INFO: Updating status display
+[12:40:30] INFO: Checking Warp availability
+[12:40:30] INFO: Executing warp command | Command: warp-cli --help
+[12:40:30] SUCCESS: Command executed successfully | Output: CLI to the WARP service daemon
+
+Usage: warp-cli [OPTIONS] <COMMAND>
+
+Commands:
+  connect            ...
+[12:40:30] SUCCESS: Warp CLI is available | warp-cli found and working
+[12:40:30] SUCCESS: Warp became available | GUI controls enabled
+[12:40:30] INFO: Gathering network information
+[12:40:30] INFO: Local IP detected | 192.168.1.4 (Private: True)
+[12:40:30] INFO: Traffic stats updated | Upload: 505.4MB, Download: 7292.7MB
+[12:40:30] SUCCESS: Network info gathered | IP: 192.168.1.4, Interface: lo
+[12:40:30] INFO: Checking connection status
+[12:40:30] INFO: Executing warp command | Command: warp-cli status
+[12:40:30] SUCCESS: Command executed successfully | Output: Status update: Unable
+Reason: Registration Missing due to: Daemon Startup...
+[12:40:30] INFO: Warp is disconnected | Status update: Unable
+Reason: Registration Missing
+[12:40:30] ERROR: Status update failed | color is None, for transparency set color='transparent'
+[12:40:32] INFO: Connection initiated by user
+[12:40:32] INFO: Executing warp command | Command: warp-cli connect
+[12:40:32] SUCCESS: Command executed successfully | Output: Success...
+[12:40:32] SUCCESS: Connection successful | Success
+[12:40:34] INFO: Updating status display
+[12:40:34] INFO: Gathering network information
+[12:40:34] INFO: Local IP detected | 192.168.1.4 (Private: True)
+[12:40:34] INFO: Traffic stats updated | Upload: 505.7MB, Download: 7294.3MB
+[12:40:34] SUCCESS: Network info gathered | IP: 192.168.1.4, Interface: lo
+[12:40:34] INFO: Checking connection status
+[12:40:34] INFO: Executing warp command | Command: warp-cli status
+[12:40:34] SUCCESS: Command executed successfully | Output: Status update: Unable
+Reason: Registration Missing due to: Daemon Startup...
+[12:40:34] INFO: Warp is disconnected | Status update: Unable
+Reason: Registration Missing
+[12:40:34] ERROR: Status update failed | color is None, for transparency set color='transparent'
+[12:40:35] INFO: Settings dialog opened
+[12:40:35] INFO: Updating status display
+[12:40:35] INFO: Gathering network information
+[12:40:35] INFO: Local IP detected | 192.168.1.4 (Private: True)
+[12:40:35] INFO: Traffic stats updated | Upload: 505.8MB, Download: 7295.0MB
+[12:40:35] SUCCESS: Network info gathered | IP: 192.168.1.4, Interface: lo
+[12:40:35] INFO: Checking connection status
+[12:40:35] INFO: Executing warp command | Command: warp-cli status
+[12:40:35] SUCCESS: Command executed successfully | Output: Status update: Unable
+Reason: Registration Missing due to: Daemon Startup...
+[12:40:35] INFO: Warp is disconnected | Status update: Unable
+Reason: Registration Missing
+[12:40:35] ERROR: Status update failed | color is None, for transparency set color='transparent'
+[12:40:40] INFO: Logs section shown
+[12:40:40] INFO: Updating status display
+[12:40:40] INFO: Gathering network information
+[12:40:40] INFO: Local IP detected | 192.168.1.4 (Private: True)
+[12:40:40] INFO: Traffic stats updated | Upload: 506.0MB, Download: 7297.8MB
+[12:40:40] SUCCESS: Network info gathered | IP: 192.168.1.4, Interface: lo
+[12:40:40] INFO: Checking connection status
+[12:40:40] INFO: Executing warp command | Command: warp-cli status
+[12:40:40] SUCCESS: Command executed successfully | Output: Status update: Unable
+Reason: Registration Missing due to: Daemon Startup...
+[12:40:40] INFO: Warp is disconnected | Status update: Unable
+Reason: Registration Missing
+[12:40:40] ERROR: Status update failed | color is None, for transparency set color='transparent'
+[12:40:43] INFO: Logs section hidden
+[12:40:44] INFO: Logs section shown
+[12:40:45] INFO: Updating status display
+[12:40:45] INFO: Gathering network information
+[12:40:45] INFO: Local IP detected | 192.168.1.4 (Private: True)
+[12:40:45] INFO: Traffic stats updated | Upload: 506.2MB, Download: 7300.2MB
+[12:40:45] SUCCESS: Network info gathered | IP: 192.168.1.4, Interface: lo
+[12:40:45] INFO: Checking connection status
+[12:40:45] INFO: Executing warp command | Command: warp-cli status
+[12:40:45] SUCCESS: Command executed successfully | Output: Status update: Unable
+Reason: Registration Missing due to: Daemon Startup...
+[12:40:45] INFO: Warp is disconnected | Status update: Unable
+Reason: Registration Missing
+[12:40:45] ERROR: Status update failed | color is None, for transparency set color='transparent'

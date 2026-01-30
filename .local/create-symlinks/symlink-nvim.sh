@@ -3,17 +3,39 @@
 
 USER=$(whoami)
 
-# DOT_PATH="/run/media/naranyala/Data/projects-remote/modular-dotfiles"
-DOT_PATH="D:\projects-remote\modular-dotfiles"
+backup="$target.bak"
 
-# target="$HOME/.config/nvim"
-target="/c/Users/Administrator/AppData/Local/nvim"
+DOT_PATH=""
+target=""
+
+
+set_linux_vars(){ 
+	DOT_PATH="/run/media/naranyala/Data/projects-remote/naravisuals-dotfiles"
+
+	target="$HOME/.config/nvim"
+}
+
+set_windows_vars(){ 
+	# DOT_PATH="D:\projects-remote\modular-dotfiles"
+	# DOT_PATH="D:\projects-remote\naravisuals-dotfiles"
+	DOT_PATH="/d/projects-remote/naravisuals-dotfiles"
+
+	target="/c/Users/Administrator/AppData/Local/nvim"
+}
+
+
+case "$(uname -s)" in
+  Linux*)   set_linux_vars ;;
+  CYGWIN*|MINGW*|MSYS*)  set_windows_vars ;;
+  *)  echo "not supported: symlink-nvim.sh" ;;
+esac
+
 
 source="$DOT_PATH/.config/nvim"
 # source="$DOT_PATH"
 
+echo "DOT_PATH: $DOT_PATH"
 
-backup="$target.bak"
 
 # Check if target exists
 if [ -e "$target" ]; then
