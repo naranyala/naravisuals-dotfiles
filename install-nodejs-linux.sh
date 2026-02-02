@@ -23,4 +23,3 @@ nvm alias default --lts
 echo "Reinstallation complete!"
 node -v
 npm -v
-
