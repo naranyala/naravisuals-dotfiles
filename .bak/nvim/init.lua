@@ -1,0 +1,1 @@
+/run/media/naranyala/Data/projects-remote/naravisuals-agentic-nvim/options/tpope-classic.lua

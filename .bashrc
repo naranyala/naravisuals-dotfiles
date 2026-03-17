@@ -1,71 +1,50 @@
+#
+# ~/.bashrc
+#
 
-# WELCOME
+# If not running interactively, don't do anything
+[[ $- != *i* ]] && return
 
-# export PATH="/c/D/dmd2/windows/bin64:$PATH"
-# export PATH="/c/D/dmd2/windows/bin:$PATH"
+alias ls='ls --color=auto'
+alias grep='grep --color=auto'
+PS1='[\u@\h \W]\$ '
+
+alias goto-remote="cd /run/media/naranyala/Data/projects-remote"
+alias goto-agentic="cd /run/media/naranyala/Data/projects-agentic"
+alias goto-diskd-bin="cd /run/media/naranyala/Data/diskd-binaries"
+
+# opencode
+export PATH=/home/naranyala/.opencode/bin:$PATH
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"                   # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" # This loads nvm bash_completion
+
+# Run fastfetch on shell initialization
+# fastfetch
+
 export PATH="~/.bun/bin:$PATH"
-export PATH="/d/projects-remote/naranyala-dotfiles/.local/bin-c99:$PATH"
-export PATH="/d/projects-remote/naranyala-dotfiles/packages/cli_md2pdf/target/debug:$PATH"
-export PATH="/d/projects-remote/naranyala-dotfiles/packages/cli_mergepdf/target/debug:$PATH"
-export PATH="/c/Users/Administrator/.opencode/bin:$PATH"
-export PATH="/c/Users//Administrator/.bun/bin:$PATH"
-# export PATH="/d/diskd-binaries/ldc2-1.41.0-windows-x64\bin:$PATH"
-export PATH="/d/diskd-binaries/c3-windows:$PATH"
-export PATH="/d/diskd-binaries/v_windows:$PATH"
-export PATH="/d/diskd-binaries/odin-windows:$PATH"
-export PATH="/d/diskd-binaries/w64devkit:$PATH"
-# export PATH="/d/diskd-binaries/tinycc:$PATH"
-export PATH="/d/diskd-binaries/vala-prebuilt:$PATH"
-export PATH="$VCPKG_ROOT:$PATH"
-export PATH="/c/Users/Administrator/.local/bin:$PATH"
-export PATH="$PATH:/c/Program Files/dotnet"
-export PATH="/c/ProgramData/chocolatey/bin:$PATH"
-export PATH="/d/projects-remote/exploration-umka-libffi/vendor/umka-lang/editors:$PATH"
 
-export VCPKG_ROOT="/c/Tools/vcpkg"
-# export PATH="/c/Program\ Files/CMake/bin:$PATH"
+alias mergepdf-cwd="bun /run/media/naranyala/Data/diskd-scripts/javascript/merge-all-pdf-in-current-dir.js"
 
+export PATH="/run/media/naranyala/Data/diskd-binaries/v_linux:$PATH"
 
-CURRENT_LANG="c_code"
-# CURRENT_LANG="crust_code"
-# CURRENT_LANG="czig_code"
-# CURRENT_LANG="c3_code"
+alias restart-plasma="pkill plasmashell && plasmashell &"
 
-build_output=""
-# extention=""
-extention=".exe"
+export WASMTIME_HOME="$HOME/.wasmtime"
 
-if [ "$CURRENT_LANG" = "c_code" ]; then
-    build_output="/_bin"
-elif [ "$CURRENT_LANG" = "crust_code" ]; then
-    build_output="/_bin/debug"
-elif [ "$CURRENT_LANG" = "czig_code" ]; then
-    build_output="/_bin"
-elif [ "$CURRENT_LANG" = "c3_code" ]; then
-    build_output=""
-fi
+export PATH="$WASMTIME_HOME/bin:$PATH"
 
-export PATH="/d/projects-remote/naranyala-dotfiles/packages/$CURRENT_LANG:$PATH"
-export PATH="/d/projects-remote/naranyala-dotfiles/packages/$CURRENT_LANG$build_output:$PATH"
-# alias dirnav="/d/projects-remote/naranyala-dotfiles/packages/$CURRENT_LANG$build_output/dirnav$extention"
+export PATH="/run/media/naranyala/Data/diskd-binaries/jule/jule/bin:$PATH"
 
-# /d/projects-remote/naranyala-dotfiles/packages/czig_code/dirnav/zig-out/bin/dirnav.exe
+alias sys-suspend="sudo /run/media/naranyala/Data/projects-remote/naravisuals-dotfiles/.local/bin-bash/force-suspend-linux.sh"
 
-# alias goto-1="cd $(dirnav --nav 0)"
-# alias goto-2="cd $(dirnav --nav 1)"
-# alias goto-3="cd $(dirnav --nav 2)"
-# alias goto-4="cd $(dirnav --nav 3)"
+alias install-bun-runtime="curl -fsSL https://bun.sh/install | bash"
+alias install-opencode="bun i -g opencode-ai@latest"
+alias install-qwencode="bun install -g @qwen-code/qwen-code@latest"
+alias install-gemini-cli="bun install -g @google/gemini-cli"
+alias install-codex="bun install -g @openai/codex"
+alias install-claude-code="curl -fsSL https://claude.ai/install.sh | bash"
 
-
-# alias mergepdf="bun /d/diskd-scripts/javascript/merge-all-pdf-in-specific-dir.js"
-# alias cmake="/c/Program\ Files/CMake/bin/cmake.exe"
-# alias w64devkit="/d/diskd-binaries/w64devkit/w64devkit.exe"
-
-alias mergepdf-cwd="bun /d/diskd-scripts/javascript/merge-all-pdf-in-current-dir.js"
-alias win-foxitpdf="/c/Program\ Files\ \(x86\)/Foxit\ Software/Foxit\ PDF\ Reader/FoxitPDFReader.exe"
-alias win-windirstat="/c/Program\ Files/WinDirStat/WinDirStat.exe"
-alias win-pdfxcview="/c/Program\ Files/Tracker\ Software/PDF\ Viewer/PDFXCview.exe"
-alias win-sumatrapdf="/c/Users/Administrator/AppData/Local/SumatraPDF/SumatraPDF.exe"
-alias edit-ps-profile="nvim /c/Users/Administrator/Documents/WindowsPowerShell/Microsoft.PowerShell_profile.ps1"
-alias win-term-new="wt -w 0  new-tab -p $(pwd)"
-alias vcpkg="/c/Users/Administrator/vcpkg/vcpkg.exe"
+alias install-rust-compiler="curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"
+alias install-rust-compiler2="sudo dnf install rust cargo"

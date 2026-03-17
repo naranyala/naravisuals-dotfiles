@@ -10,7 +10,7 @@ target=""
 
 
 set_linux_vars(){ 
-	DOT_PATH="/run/media/naranyala/Data/projects-remote/naravisuals-dotfiles"
+	DOT_PATH="/run/media/$USER/Data/projects-remote/naravisuals-dotfiles"
 
 	target="$HOME/.config/nvim"
 }

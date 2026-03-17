@@ -51,6 +51,17 @@ vim.keymap.set("n", "<C-Down>", "<Nop>")
 vim.keymap.set("n", "<C-Left>", "<Nop>")
 vim.keymap.set("n", "<C-Right>", "<Nop>")
 
+-- vim.keymap.set("n", "<leader>mi", function()
+--   vim.cmd([[g/^!.*\]\(.*\)/norm I<!-- ]])
+--   vim.cmd([[g/^!.*\]\(.*\)/norm A -->]])
+-- end, { desc = "Block all markdown images" })
+
+
+vim.keymap.set("n", "<leader>xmi", function()
+  vim.cmd([[g/^!.*\]\(.*\)/d]])
+end, { desc = "Delete markdown images directly" })
+
+
 
 -- require('lib.suckless_infobar').setup({
 --     sources = {
