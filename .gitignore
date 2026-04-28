@@ -1,6 +1,13 @@
 
 temp
 
+**/auth.json
+**/models.json
+
+**/sessions
+**/node_modules
+
+**/.env
 
 packages/**/target
 packages/**/node_modules

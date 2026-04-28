@@ -1,0 +1,10 @@
+{
+  "lastChangelogVersion": "0.67.3",
+  "packages": [
+    "npm:@ollama/pi-web-search",
+    "../../../../media/naranyala/Data/projects-remote/pi-ext-better-indexing",
+    "../../../../media/naranyala/Data/projects-remote/pi-ext-floating-context"
+  ],
+  "defaultProvider": "google-gemini-cli",
+  "defaultModel": "gemini-3-flash-preview"
+}

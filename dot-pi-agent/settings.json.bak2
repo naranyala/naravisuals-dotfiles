@@ -1,0 +1,31 @@
+{
+  "lastChangelogVersion": "0.67.68",
+  "packages": [
+    "npm:pi-web-access",
+    "https://github.com/davebcn87/pi-autoresearch",
+    "../../../../media/naranyala/Data/projects-pi-ext/pi-ext-floating-context",
+    "../../../../media/naranyala/Data/projects-pi-ext/pi-ext-token-compression",
+    "../../../../media/naranyala/Data/projects-pi-ext/pi-ext-better-reasoning-history",
+    "../../../../media/naranyala/Data/projects-pi-ext/pi-ext-rustcode-companion",
+    "../../../../media/naranyala/Data/projects-pi-ext/pi-ext-typescript-companion",
+    "../../../../media/naranyala/Data/projects-pi-ext/pi-ext-intent-validator",
+    "../../../../media/naranyala/Data/projects-pi-ext/pi-ext-css-styles-companion",
+    "../../../../media/naranyala/Data/projects-pi-ext/pi-ext-prompt-grammar-correction",
+    "../../../../media/naranyala/Data/projects-pi-ext/pi-ext-rigorous-code-review",
+    "../../../../media/naranyala/Data/projects-pi-ext/pi-ext-visuals-dx-enhancement",
+    "../../../../media/naranyala/Data/projects-pi-ext/pi-ext-better-scrolling-at-streming-response",
+    "../../../../media/naranyala/Data/projects-pi-ext/pi-ext-git-intelligence",
+    "../../../../media/naranyala/Data/projects-pi-ext/pi-ext-secondlayer-web-search",
+    "../../../../media/naranyala/Data/projects-pi-ext/pi-ext-rust-oriented-cli-toolkits",
+    "../../../../media/naranyala/Data/projects-pi-ext/pi-ext-better-markdown-fuzzy",
+    "../../../../media/naranyala/Data/projects-pi-ext/pi-ext-c-programming-companion",
+    "../../../../media/naranyala/Data/projects-pi-ext/pi-ext-asked-prompt-navigation",
+    "../../../../media/naranyala/Data/projects-pi-ext/pi-ext-expose-reasoning-process-visuals",
+    "git:github.com/apmantza/pi-lens"
+  ],
+  "defaultProvider": "google-gemini-cli",
+  "defaultModel": "gemini-3-flash-preview",
+  "defaultThinkingLevel": "medium",
+  "hideThinkingBlock": true,
+  "theme": "dark"
+}
