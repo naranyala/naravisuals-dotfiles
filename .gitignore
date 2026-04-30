@@ -1,6 +1,9 @@
 
 temp
 
+script-python/.venv
+**/.venv
+
 **/auth.json
 **/models.json
 
