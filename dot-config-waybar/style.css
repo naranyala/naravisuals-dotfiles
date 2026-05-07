@@ -1,0 +1,91 @@
+* {
+    border: none;
+    border-radius: 0;
+    font-family: "Inter", "Roboto", "Helvetica", "Arial", sans-serif;
+    font-size: 13px;
+    min-height: 0;
+}
+
+window#waybar {
+    background-color: rgba(30, 30, 46, 0.7);
+    color: #cdd6f4;
+    border-radius: 0;
+    margin: 0;
+}
+
+/* All modules */
+#custom-workspaces,
+#custom-window,
+#clock,
+#pulseaudio,
+#custom-network,
+#battery,
+#cpu,
+#memory,
+#temperature,
+#custom-disk,
+#custom-power,
+#tray {
+    padding: 0 10px;
+    margin: 4px 0;
+}
+
+/* Workspaces */
+#custom-workspaces button {
+    padding: 0 5px;
+    color: #cdd6f4;
+}
+
+#custom-workspaces button.active {
+    color: #89b4fa;
+}
+
+#custom-workspaces button.urgent {
+    color: #f38ba8;
+}
+
+/* Custom Window Module */
+#custom-window {
+    font-weight: bold;
+}
+
+/* Clock */
+#clock {
+    font-weight: bold;
+}
+
+/* Pulseaudio */
+#pulseaudio.muted {
+    color: #f38ba8;
+}
+
+/* Network */
+#network.disconnected {
+    color: #f38ba8;
+}
+
+/* Battery */
+#battery.warning {
+    color: #fab387;
+}
+
+#battery.critical:not(.charging) {
+    color: #f38ba8;
+    animation-name: blink;
+    animation-duration: .5s;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
+}
+
+@keyframes blink {
+    to {
+        background-color: #f38ba8;
+        color: #1e1e2e;
+    }
+}
+
+/* Tray */
+#tray {
+    margin-right: 10px;
+}

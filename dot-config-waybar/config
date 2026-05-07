@@ -1,0 +1,101 @@
+{
+    "layer": "top",
+    "position": "top",
+    "height": 34,
+    "spacing": 4,
+    "modules-left": [
+        "custom/window"
+    ],
+    "modules-center": [],
+    "modules-right": [
+        "pulseaudio",
+        "custom/network",
+        "battery",
+        "cpu",
+        "memory",
+        "temperature",
+        "custom/disk",
+        "custom/power",
+        "clock",
+        "tray"
+    ],
+
+    "custom/workspaces": {
+        "format": "{}",
+        "exec": "/home/naranyala/.config/waybar/workspaces.sh",
+        "return-type": "json",
+        "interval": 1
+    },
+
+    "custom/window": {
+        "format": "{}",
+        "exec": "/home/naranyala/.config/waybar/window_info.sh",
+        "return-type": "json",
+        "interval": 1
+    },
+
+    "custom/disk": {
+        "format": "{}",
+        "exec": "/home/naranyala/.config/waybar/disk_usage.sh",
+        "return-type": "json",
+        "interval": 10,
+        "on-click": "/home/naranyala/.config/waybar/disk_picker.sh"
+    },
+
+    "custom/power": {
+        "format": "[ Power ]",
+        "on-click": "/home/naranyala/.config/waybar/session_menu.sh"
+    },
+
+    "clock": {
+        "format": "{:%H:%M}",
+        "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>"
+    },
+
+    "pulseaudio": {
+        "format": "[ audio {volume}% ]",
+        "on-click": "pavucontrol"
+    },
+
+    "custom/network": {
+        "format": "{}",
+        "exec": "/home/naranyala/.config/waybar/network_status.sh",
+        "return-type": "json",
+        "interval": 2,
+        "on-click": "/home/naranyala/.config/waybar/network_menu.sh"
+    },
+
+    "battery": {
+        "states": {
+            "warning": 30,
+            "critical": 15
+        },
+        "format": "[ battery {capacity}% ]",
+        "format-charging": "[ charging {capacity}% ]",
+        "format-plugged": "[ plugged {capacity}% ]",
+        "format-alt": "[ battery {time} ]"
+    },
+
+    "cpu": {
+        "format": "[ cpu {usage}% ]",
+        "interval": 2,
+        "on-click": "ghostty -e btop"
+    },
+
+    "memory": {
+        "format": "[ mem {percentage}% ]",
+        "interval": 2,
+        "on-click": "ghostty -e btop"
+    },
+
+    "temperature": {
+        "critical-threshold": 80,
+        "format": "[ temp {temperatureC}°C ]",
+        "on-click": "ghostty -e btop"
+    },
+
+    "tray": {
+        "icon-size": 18,
+        "spacing": 10
+    }
+}
