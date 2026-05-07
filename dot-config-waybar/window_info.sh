@@ -23,9 +23,9 @@ TOTAL_WINDOWS=$(echo "$WINDOWS_IN_WORKSPACE" | jq 'length')
 # Find the index of the focused window in the sorted list
 INDEX=$(echo "$WINDOWS_IN_WORKSPACE" | jq "to_entries | map(select(.value.id == $FOCUSED_ID)) | .[0].key + 1")
 
-# Format index and total as 01, 02, etc.
-FORMATTED_INDEX=$(printf "%02d" "$INDEX")
-FORMATTED_TOTAL=$(printf "%02d" "$TOTAL_WINDOWS")
+# Format index and total as 1, 2, etc.
+FORMATTED_INDEX=$(printf "%d" "$INDEX")
+FORMATTED_TOTAL=$(printf "%d" "$TOTAL_WINDOWS")
 
 # Output as JSON
 echo "{\"text\": \"$FORMATTED_INDEX/$FORMATTED_TOTAL $CLEAN_APP_NAME\"}"
