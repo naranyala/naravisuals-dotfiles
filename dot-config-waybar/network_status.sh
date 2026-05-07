@@ -3,30 +3,24 @@
 # Interface name
 INTERFACE="wlp2s0"
 
-# Get state and connection name in one call
-# Output format: state:connection
+# Get the state and active connection
 INFO=$(nmcli -t -f GENERAL.STATE,GENERAL.CONNECTION device show "$INTERFACE")
-STATE=$(echo "$INFO" | cut -d: -f1)
-CONN=$(echo "$INFO" | cut -d: -f2)
+STATE=$(echo "$INFO" | grep "GENERAL.STATE" | cut -d: -f2)
+CONN=$(echo "$INFO" | grep "GENERAL.CONNECTION" | cut -d: -f2)
 
-if [ "$STATE" == "connected" ]; then
-    # Get the actual SSID of the active connection
-    SSID=$(nmcli -t -f 802-11-wireless.ssid connection show "$CONN" | cut -d: -f2)
+if [[ "$STATE" == *"connected"* ]]; then
+    # Get the SSID from the active connection
+    if [ -n "$CONN" ]; then
+        SSID=$(nmcli -t -f 802-11-wireless.ssid connection show "$CONN" | cut -d: -f2)
+    fi
+    
     if [ -n "$SSID" ]; then
         TEXT="[ net $SSID ]"
     else
-        TEXT="[ net WiFi ]"
-    fi
-elif [ "$STATE" == "disconnected" ] || [ "$STATE" == "unavailable" ]; then
-    # Check if Ethernet is connected as fallback
-    ETH_CONN=$(nmcli -t -f DEVICE,STATE device | grep "ethernet" | grep "connected")
-    if [ -n "$ETH_CONN" ]; then
-        TEXT="[ net ETH ]"
-    else
-        TEXT="[ net OFF ]"
+        TEXT="[ net connected ]"
     fi
 else
-    TEXT="[ net $STATE ]"
+    TEXT="[ net disconnected ]"
 fi
 
 echo "{\"text\": \"$TEXT\"}"

@@ -28,4 +28,4 @@ FORMATTED_INDEX=$(printf "%d" "$INDEX")
 FORMATTED_TOTAL=$(printf "%d" "$TOTAL_WINDOWS")
 
 # Output as JSON
-echo "{\"text\": \"$FORMATTED_INDEX/$FORMATTED_TOTAL $CLEAN_APP_NAME\"}"
+echo "{\"text\": \" $FORMATTED_INDEX/$FORMATTED_TOTAL $CLEAN_APP_NAME\"}"

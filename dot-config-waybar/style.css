@@ -11,6 +11,7 @@ window#waybar {
     color: #cdd6f4;
     border-radius: 0;
     margin: 0;
+    padding-left: 10px;
 }
 
 /* All modules */
@@ -25,9 +26,11 @@ window#waybar {
 #temperature,
 #custom-disk,
 #custom-power,
+#custom-brightness,
+#custom-bandwidth,
 #tray {
-    padding: 0 10px;
-    margin: 4px 0;
+    padding: 0 2px;
+    margin: 1px 0;
 }
 
 /* Workspaces */

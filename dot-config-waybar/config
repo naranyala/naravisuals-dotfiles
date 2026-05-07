@@ -2,14 +2,16 @@
     "layer": "top",
     "position": "top",
     "height": 34,
-    "spacing": 4,
+    "spacing": 2,
     "modules-left": [
         "custom/window"
     ],
     "modules-center": [],
     "modules-right": [
         "pulseaudio",
+        "custom/brightness",
         "custom/network",
+        "custom/bandwidth",
         "battery",
         "cpu",
         "memory",
@@ -58,12 +60,25 @@
         "on-click": "pavucontrol"
     },
 
+    "custom/brightness": {
+        "format": "[ Brightness ]",
+        "on-click": "/home/naranyala/.config/waybar/brightness_menu.sh"
+    },
+
     "custom/network": {
         "format": "{}",
         "exec": "/home/naranyala/.config/waybar/network_status.sh",
         "return-type": "json",
         "interval": 2,
         "on-click": "/home/naranyala/.config/waybar/network_menu.sh"
+    },
+
+    "custom/bandwidth": {
+        "format": "{}",
+        "exec": "/home/naranyala/.config/waybar/bandwidth_monitor.py",
+        "return-type": "json",
+        "interval": 10,
+        "on-click": "/home/naranyala/.config/waybar/bandwidth_monitor.py --toggle"
     },
 
     "battery": {
