@@ -1,0 +1,731 @@
+/**
+* This file is a part of the Cairo-Dock project
+*
+* Copyright : (C) see the 'copyright' file.
+* E-mail    : see the 'copyright' file.
+*
+* This program is free software; you can redistribute it and/or
+* modify it under the terms of the GNU General Public License
+* as published by the Free Software Foundation; either version 3
+* of the License, or (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+* You should have received a copy of the GNU General Public License
+* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+#include <math.h>
+#include <stdlib.h>
+
+#include "cairo-dock-icon-manager.h"  // myIconsParam.iIconWidth
+#include "cairo-dock-desklet-manager.h"  // CAIRO_DOCK_IS_DESKLET
+#include "cairo-dock-surface-factory.h"
+#include "cairo-dock-log.h"
+#include "cairo-dock-draw.h"
+#include "cairo-dock-draw-opengl.h"
+#include "cairo-dock-opengl.h"  // gldi_gl_container_make_current
+#include "cairo-dock-image-buffer.h"
+
+extern gchar *g_cCurrentThemePath;
+extern gchar *g_cCurrentIconsPath;
+extern gchar *g_cCurrentImagesPath;
+
+extern gboolean g_bUseOpenGL;
+extern CairoDockGLConfig g_openglConfig;
+extern gboolean g_bEasterEggs;
+extern GldiContainer *g_pPrimaryContainer;
+
+
+gchar *cairo_dock_search_image_s_path (const gchar *cImageFile)
+{
+	g_return_val_if_fail (cImageFile != NULL, NULL);
+	gchar *cImagePath;
+	if (*cImageFile == '~')
+	{
+		cImagePath = g_strdup_printf ("%s%s", getenv("HOME"), cImageFile + 1);
+		if (!g_file_test (cImagePath, G_FILE_TEST_EXISTS))
+		{
+			g_free (cImagePath);
+			cImagePath = NULL;
+		}
+	}
+	else if (*cImageFile == '/')
+	{
+		if (!g_file_test (cImageFile, G_FILE_TEST_EXISTS))
+			cImagePath = NULL;
+		else
+			cImagePath = g_strdup (cImageFile);
+	}
+	else
+	{
+		cImagePath = g_strdup_printf ("%s/%s", g_cCurrentImagesPath, cImageFile);
+		if (!g_file_test (cImagePath, G_FILE_TEST_EXISTS))
+		{
+			g_free (cImagePath);
+			cImagePath = g_strdup_printf ("%s/%s", g_cCurrentThemePath, cImageFile);
+			if (!g_file_test (cImagePath, G_FILE_TEST_EXISTS))
+			{
+				g_free (cImagePath);
+				cImagePath = g_strdup_printf ("%s/%s", g_cCurrentIconsPath, cImageFile);
+				if (!g_file_test (cImagePath, G_FILE_TEST_EXISTS))
+				{
+					g_free (cImagePath);
+					cImagePath = NULL;
+				}
+			}
+		}
+	}
+	return cImagePath;
+}
+
+
+void cairo_dock_load_image_buffer_full (CairoDockImageBuffer *pImage, const gchar *cImageFile, int iWidth, int iHeight, CairoDockLoadImageModifier iLoadModifier, double fAlpha)
+{
+	if (cImageFile == NULL)
+		return;
+	gchar *cImagePath = cairo_dock_search_image_s_path (cImageFile);
+	double w=0, h=0;
+	pImage->pSurface = cairo_dock_create_surface_from_image (
+		cImagePath,
+		1.,
+		iWidth,
+		iHeight,
+		iLoadModifier,
+		&w,
+		&h,
+		&pImage->fZoomX,
+		&pImage->fZoomY);
+	pImage->iWidth = w;
+	pImage->iHeight = h;
+	
+	if ((iLoadModifier & CAIRO_DOCK_ANIMATED_IMAGE) && h != 0)
+	{
+		//g_print ("%dx%d\n", (int)w, (int)h);
+		if (w >= 2*h)  // we need at least 2 frames (Note: we assume that frames are wide).
+		{
+			if ((int)w % (int)h == 0)  // w = k*h
+			{
+				pImage->iNbFrames = w / h;
+			}
+			else if (w > 2 * h)  // if we're pretty sure this image is an animated one, try to be smart, to handle the case of non-square frames.
+			{
+				// assume we have wide frames => w > h
+				int w_ = h+1;
+				do
+				{
+					//g_print (" %d/%d\n", w_, (int)w);
+					if ((int)w % w_ == 0)
+					{
+						pImage->iNbFrames = w / w_;
+						break;
+					}
+					w_ ++;
+				} while (w_ < w / 2);
+			}
+		}
+		//g_print ("CAIRO_DOCK_ANIMATED_IMAGE -> %d frames\n", pImage->iNbFrames);
+		if (pImage->iNbFrames != 0)
+		{
+			pImage->fDeltaFrame = 1. / pImage->iNbFrames;  // default value
+			gettimeofday (&pImage->time, NULL);
+		}
+	}
+	
+	if (fAlpha < 1 && pImage->pSurface != NULL)
+	{
+		cairo_surface_t *pNewSurfaceAlpha = cairo_dock_create_blank_surface (
+			w,
+			h);
+		cairo_t *pCairoContext = cairo_create (pNewSurfaceAlpha);
+
+		cairo_set_source_surface (pCairoContext, pImage->pSurface, 0, 0);
+		cairo_paint_with_alpha (pCairoContext, fAlpha);
+		cairo_destroy (pCairoContext);
+
+		cairo_surface_destroy (pImage->pSurface);
+		pImage->pSurface = pNewSurfaceAlpha;
+	}
+	
+	if (g_bUseOpenGL)
+		pImage->iTexture = cairo_dock_create_texture_from_surface_full (pImage->pSurface,
+			&pImage->iTexWidth, &pImage->iTexHeight);
+	
+	g_free (cImagePath);
+}
+
+void cairo_dock_load_image_buffer_from_surface (CairoDockImageBuffer *pImage, cairo_surface_t *pSurface, int iWidth, int iHeight)
+{
+	if ((iWidth == 0 || iHeight == 0) && pSurface != NULL)  // should never happen, but just in case, prevent any inconsistency.
+	{
+		cd_warning ("An image has an invalid size, will not be loaded.");
+		pSurface = NULL;
+	}
+	pImage->pSurface = pSurface;
+	pImage->iWidth = iWidth;
+	pImage->iHeight = iHeight;
+	pImage->fZoomX = 1.;
+	pImage->fZoomY = 1.;
+	if (g_bUseOpenGL)
+		pImage->iTexture = cairo_dock_create_texture_from_surface_full (pImage->pSurface,
+			&pImage->iTexWidth, &pImage->iTexHeight);
+}
+
+void cairo_dock_load_image_buffer_from_texture (CairoDockImageBuffer *pImage, GLuint iTexture, int iWidth, int iHeight)
+{
+	pImage->iTexture = iTexture;
+	pImage->iWidth = iWidth;
+	pImage->iHeight = iHeight;
+	pImage->fZoomX = 1.;
+	pImage->fZoomY = 1.;
+}
+
+CairoDockImageBuffer *cairo_dock_create_image_buffer (const gchar *cImageFile, int iWidth, int iHeight, CairoDockLoadImageModifier iLoadModifier)
+{
+	CairoDockImageBuffer *pImage = g_new0 (CairoDockImageBuffer, 1);
+	
+	cairo_dock_load_image_buffer (pImage, cImageFile, iWidth, iHeight, iLoadModifier);
+	
+	return pImage;
+}
+
+void cairo_dock_unload_image_buffer (CairoDockImageBuffer *pImage)
+{
+	if (pImage->pSurface != NULL)
+	{
+		cairo_surface_destroy (pImage->pSurface);
+	}
+	if (pImage->iTexture != 0)
+	{
+		_cairo_dock_delete_texture (pImage->iTexture);
+	}
+	memset (pImage, 0, sizeof (CairoDockImageBuffer));
+}
+
+void cairo_dock_free_image_buffer (CairoDockImageBuffer *pImage)
+{
+	if (pImage == NULL)
+		return;
+	cairo_dock_unload_image_buffer (pImage);
+	g_free (pImage);
+}
+
+void cairo_dock_image_buffer_next_frame (CairoDockImageBuffer *pImage)
+{
+	if (pImage->iNbFrames == 0)
+		return;
+	struct timeval cur_time = pImage->time;
+	gettimeofday (&pImage->time, NULL);
+	double fElapsedTime = (pImage->time.tv_sec - cur_time.tv_sec) + (pImage->time.tv_usec - cur_time.tv_usec) * 1e-6;
+	double fElapsedFrame = fElapsedTime / pImage->fDeltaFrame;
+	pImage->iCurrentFrame += fElapsedFrame;
+	
+	if (pImage->iCurrentFrame > pImage->iNbFrames - 1)
+		pImage->iCurrentFrame -= (pImage->iNbFrames - 1);
+	//g_print (" + %.2f => %.2f -> %.2f\n", fElapsedTime, fElapsedFrame, pImage->iCurrentFrame);
+}
+
+gboolean cairo_dock_image_buffer_next_frame_no_loop (CairoDockImageBuffer *pImage)
+{
+	if (pImage->iNbFrames == 0)
+		return FALSE;
+	double cur_frame = pImage->iCurrentFrame;
+	if (cur_frame == 0)  // be sure to start from the first frame, since the image might have been loaded some time ago.
+		cairo_dock_image_buffer_rewind (pImage);
+	
+	cairo_dock_image_buffer_next_frame (pImage);
+	
+	if (pImage->iCurrentFrame < cur_frame || pImage->iCurrentFrame >= pImage->iNbFrames)  // last frame reached -> stay on the last frame
+	{
+		pImage->iCurrentFrame = pImage->iNbFrames;
+		return TRUE;
+	}
+	return FALSE;
+}
+
+void cairo_dock_apply_image_buffer_surface_with_offset (const CairoDockImageBuffer *pImage, cairo_t *pCairoContext, double x, double y, double fAlpha)
+{
+	if (cairo_dock_image_buffer_is_animated (pImage))
+	{
+		int iFrameWidth = pImage->iWidth / pImage->iNbFrames;
+		
+		cairo_save (pCairoContext);
+		cairo_translate (pCairoContext, x, y);
+		cairo_rectangle (pCairoContext, 0, 0, iFrameWidth, pImage->iHeight);
+		cairo_clip (pCairoContext);
+		
+		int n = (int) pImage->iCurrentFrame;
+		double dn = pImage->iCurrentFrame - n;
+		
+		cairo_set_source_surface (pCairoContext, pImage->pSurface, - n * iFrameWidth, 0.);
+		cairo_paint_with_alpha (pCairoContext, fAlpha * (1 - dn));
+		
+		int n2 = n + 1;
+		if (n2 >= pImage->iNbFrames)
+			n2  = 0;
+		cairo_set_source_surface (pCairoContext, pImage->pSurface, - n2 * iFrameWidth, 0.);
+		cairo_paint_with_alpha (pCairoContext, fAlpha * dn);
+		
+		cairo_restore (pCairoContext);
+	}
+	else
+	{
+		cairo_set_source_surface (pCairoContext, pImage->pSurface, x, y);
+		cairo_paint_with_alpha (pCairoContext, fAlpha);
+	}
+}
+
+void cairo_dock_apply_image_buffer_texture_with_offset (const CairoDockImageBuffer *pImage, double x, double y)
+{
+	glBindTexture (GL_TEXTURE_2D, pImage->iTexture);
+	if (cairo_dock_image_buffer_is_animated (pImage))
+	{
+		int iFrameWidth = pImage->iWidth / pImage->iNbFrames;
+		
+		int n = (int) pImage->iCurrentFrame;
+		double dn = pImage->iCurrentFrame - n;
+		
+		_cairo_dock_set_blend_alpha ();
+		
+		_cairo_dock_set_alpha (1. - dn);
+		_cairo_dock_apply_current_texture_portion_at_size_with_offset ((double)n / pImage->iNbFrames, 0,
+			1. / pImage->iNbFrames, 1.,
+			iFrameWidth, pImage->iHeight,
+			x, y);
+		
+		int n2 = n + 1;
+		if (n2 >= pImage->iNbFrames)
+			n2  = 0;
+		_cairo_dock_set_alpha (dn);
+		_cairo_dock_apply_current_texture_portion_at_size_with_offset ((double)n2 / pImage->iNbFrames, 0,
+			1. / pImage->iNbFrames, 1.,
+			iFrameWidth, pImage->iHeight,
+			x, y);
+	}
+	else
+	{
+		_cairo_dock_apply_current_texture_at_size_with_offset (pImage->iWidth, pImage->iHeight, x, y);
+	}
+}
+
+void cairo_dock_apply_image_buffer_surface_at_size (const CairoDockImageBuffer *pImage, cairo_t *pCairoContext, int w, int h, double x, double y, double fAlpha)
+{
+	if (cairo_dock_image_buffer_is_animated (pImage))
+	{
+		int iFrameWidth = pImage->iWidth / pImage->iNbFrames;
+		
+		cairo_save (pCairoContext);
+		cairo_translate (pCairoContext, x, y);
+		
+		cairo_scale (pCairoContext, (double) w/pImage->iWidth, (double) h/pImage->iHeight);
+		
+		cairo_rectangle (pCairoContext, 0, 0, iFrameWidth, pImage->iHeight);
+		cairo_clip (pCairoContext);
+		
+		int n = (int) pImage->iCurrentFrame;
+		double dn = pImage->iCurrentFrame - n;
+		
+		cairo_set_source_surface (pCairoContext, pImage->pSurface, - n * iFrameWidth, 0.);
+		cairo_paint_with_alpha (pCairoContext, fAlpha * (1 - dn));
+		
+		int n2 = n + 1;
+		if (n2 >= pImage->iNbFrames)
+			n2  = 0;
+		cairo_set_source_surface (pCairoContext, pImage->pSurface, - n2 * iFrameWidth, 0.);
+		cairo_paint_with_alpha (pCairoContext, fAlpha * dn);
+		
+		cairo_restore (pCairoContext);
+	}
+	else
+	{
+		cairo_save (pCairoContext);
+		cairo_translate (pCairoContext, x, y);
+		
+		cairo_scale (pCairoContext, (double) w/pImage->iWidth, (double) h/pImage->iHeight);
+		
+		cairo_set_source_surface (pCairoContext, pImage->pSurface, 0, 0);
+		cairo_paint_with_alpha (pCairoContext, fAlpha);
+		
+		cairo_restore (pCairoContext);
+	}
+}
+
+void cairo_dock_apply_image_buffer_texture_at_size (const CairoDockImageBuffer *pImage, int w, int h, double x, double y)
+{
+	glBindTexture (GL_TEXTURE_2D, pImage->iTexture);
+	if (cairo_dock_image_buffer_is_animated (pImage))
+	{
+		int n = (int) pImage->iCurrentFrame;
+		double dn = pImage->iCurrentFrame - n;
+		
+		_cairo_dock_set_blend_alpha ();
+		
+		_cairo_dock_set_alpha (1. - dn);
+		_cairo_dock_apply_current_texture_portion_at_size_with_offset ((double)n / pImage->iNbFrames, 0,
+			1. / pImage->iNbFrames, 1.,
+			w, h,
+			x, y);
+		
+		int n2 = n + 1;
+		if (n2 >= pImage->iNbFrames)
+			n2  = 0;
+		_cairo_dock_set_alpha (dn);
+		_cairo_dock_apply_current_texture_portion_at_size_with_offset ((double)n2 / pImage->iNbFrames, 0,
+			1. / pImage->iNbFrames, 1.,
+			w, h,
+			x, y);
+	}
+	else
+	{
+		_cairo_dock_apply_current_texture_at_size_with_offset (w, h, x, y);
+	}
+}
+
+
+void cairo_dock_apply_image_buffer_surface_with_offset_and_limit (const CairoDockImageBuffer *pImage, cairo_t *pCairoContext, double x, double y, double fAlpha, int iMaxWidth)
+{
+	cairo_set_source_surface (pCairoContext,
+		pImage->pSurface,
+		x,
+		y);
+	
+	const double a = .75;  // 3/4 plain, 1/4 gradation
+	cairo_pattern_t *pGradationPattern = cairo_pattern_create_linear (x,
+		0.,
+		x + iMaxWidth,
+		0.);
+	cairo_pattern_set_extend (pGradationPattern, CAIRO_EXTEND_NONE);
+	cairo_pattern_add_color_stop_rgba (pGradationPattern,
+		0.,
+		0.,
+		0.,
+		0.,
+		fAlpha);
+	cairo_pattern_add_color_stop_rgba (pGradationPattern,
+		a,
+		0.,
+		0.,
+		0.,
+		fAlpha);
+	cairo_pattern_add_color_stop_rgba (pGradationPattern,
+		1.,
+		0.,
+		0.,
+		0.,
+		0.);
+	cairo_mask (pCairoContext, pGradationPattern);
+	cairo_pattern_destroy (pGradationPattern);
+}
+
+void cairo_dock_apply_image_buffer_texture_with_limit (const CairoDockImageBuffer *pImage, double fAlpha, int iMaxWidth)
+{
+	glBindTexture (GL_TEXTURE_2D, pImage->iTexture);
+	
+	int w = iMaxWidth, h = pImage->iHeight;
+	double u0 = 0., u1 = (double) w / pImage->iWidth;
+	glBegin(GL_QUAD_STRIP);
+	
+	double a = .75;  // 3/4 plain, 1/4 gradation
+	a = (double) (floor ((-.5+a)*w)) / w + .5;
+	glColor4f (1., 1., 1., fAlpha);
+	glTexCoord2f(u0, 0); glVertex3f (-.5*w,  .5*h, 0.);  // top left
+	glTexCoord2f(u0, 1); glVertex3f (-.5*w, -.5*h, 0.);  // bottom left
+	
+	glTexCoord2f(u1*a, 0); glVertex3f ((-.5+a)*w,  .5*h, 0.);  // top middle
+	glTexCoord2f(u1*a, 1); glVertex3f ((-.5+a)*w, -.5*h, 0.);  // bottom middle
+	
+	glColor4f (1., 1., 1., 0.);
+	
+	glTexCoord2f(u1, 0); glVertex3f (.5*w,  .5*h, 0.);  // top right
+	glTexCoord2f(u1, 1); glVertex3f (.5*w, -.5*h, 0.);  // bottom right
+	
+	glEnd();
+}
+
+
+
+// to draw on image buffers
+static GLuint s_iFboId = 0;
+static gboolean s_bRedirected = FALSE;
+static gboolean s_bOffscreen = FALSE; // whether we are rendering with an "offscreen" context
+static GLuint s_iRedirectedTexture = 0;
+static gint s_iRedirectWidth = 0;
+static gint s_iRedirectHeight = 0;
+
+void cairo_dock_create_icon_fbo (void)  // it has been found that you get a speed boost if your textures is the same size and you use 1 FBO for them. => c'est le cas general dans le dock. Du coup on est gagnant a ne faire qu'un seul FBO pour toutes les icones.
+{
+	if (! g_openglConfig.bFboAvailable)
+		return ;
+	g_return_if_fail (s_iFboId == 0);
+	
+	glGenFramebuffersEXT(1, &s_iFboId);
+	
+	s_iRedirectWidth = myIconsParam.iIconWidth * (1 + myIconsParam.fAmplitude);  // use a common size (it can be any size, but we'll often use it to draw on icons, so this choice will often avoid a glScale).
+	s_iRedirectHeight = myIconsParam.iIconHeight * (1 + myIconsParam.fAmplitude);
+	s_iRedirectedTexture = cairo_dock_create_texture_from_raw_data (NULL, s_iRedirectWidth, s_iRedirectHeight);
+}
+
+void cairo_dock_destroy_icon_fbo (void)
+{
+	if (s_iFboId == 0)
+		return;
+	glDeleteFramebuffersEXT (1, &s_iFboId);
+	s_iFboId = 0;
+	
+	_cairo_dock_delete_texture (s_iRedirectedTexture);
+	s_iRedirectedTexture = 0;
+}
+
+
+cairo_t *cairo_dock_begin_draw_image_buffer_cairo (CairoDockImageBuffer *pImage, gint iRenderingMode, cairo_t *pCairoContext)
+{
+	g_return_val_if_fail (pImage->pSurface != NULL, NULL);
+	cairo_t *ctx = pCairoContext;
+	if (! ctx)
+	{
+		ctx = cairo_create (pImage->pSurface);
+	}
+	if (iRenderingMode != 1)
+	{
+		cairo_dock_erase_cairo_context (ctx);
+	}
+	return ctx;
+}
+
+void cairo_dock_end_draw_image_buffer_cairo (CairoDockImageBuffer *pImage)
+{
+	if (g_bUseOpenGL)
+		cairo_dock_image_buffer_update_texture (pImage);
+}
+
+
+gboolean cairo_dock_begin_draw_image_buffer_opengl (CairoDockImageBuffer *pImage, GldiContainer *pContainer, gint iRenderingMode)
+{
+	int iWidth, iHeight;
+	// cd_debug ("container: %p (realized: %d, size: %dx%d), image size: %dx%d",
+	// 	pContainer, pContainer? gtk_widget_get_realized (pContainer->pWidget) : 0,
+	// 	pContainer ? pContainer->iWidth : 0, pContainer ? pContainer->iHeight : 0,
+	// 	pImage->iWidth, pImage->iHeight);
+	/// TODO: test without FBO and dock when iRenderingMode == 2
+	if (pContainer && CAIRO_DOCK_IS_DESKLET (pContainer))
+	{
+		// printf ("   is_desklet: 1\n");
+		if (! gldi_gl_container_make_current (pContainer))
+		{
+			// for desklets, we render directly to their surface, so we
+			// require to use their OpenGL context
+			return FALSE;
+		}
+		iWidth = pContainer->iWidth;
+		iHeight = pContainer->iHeight;
+		glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	}
+	else if (s_iFboId != 0)
+	{
+		// we attach the texture to the FBO.
+		// we first try to use an offscreen context:
+		// this is more flexible, as on Wayland, gldi_gl_container_make_current ()
+		// would fail if the container is not mapped
+		s_bOffscreen = gldi_gl_offscreen_context_make_current ();
+		
+		// if this doesn't work (we're using GLX), try using the container's context
+		if (!s_bOffscreen)
+		{
+			if (!pContainer || !gldi_gl_container_make_current (pContainer))
+			{
+				cd_warning ("couldn't set the opengl context");
+				return FALSE;
+			}
+		}
+		
+		iWidth = pImage->iWidth, iHeight = pImage->iHeight;
+		
+		glBindFramebufferEXT (GL_FRAMEBUFFER_EXT, s_iFboId);  // we redirect on our FBO.
+		s_bRedirected = (iRenderingMode == 2);
+		glFramebufferTexture2DEXT (GL_FRAMEBUFFER_EXT,
+			GL_COLOR_ATTACHMENT0_EXT,
+			GL_TEXTURE_2D,
+			s_bRedirected ? s_iRedirectedTexture : pImage->iTexture,
+			0);  // attach the texture to FBO color attachment point.
+		
+		GLenum status = glCheckFramebufferStatusEXT (GL_FRAMEBUFFER_EXT);
+		if (status != GL_FRAMEBUFFER_COMPLETE_EXT)
+		{
+			cd_warning ("FBO not ready (tex:%d)", pImage->iTexture);
+			glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);  // switch back to window-system-provided framebuffer
+			glFramebufferTexture2DEXT (GL_FRAMEBUFFER_EXT,
+				GL_COLOR_ATTACHMENT0_EXT,
+				GL_TEXTURE_2D,
+				0,
+				0);
+			return FALSE;
+		}
+		
+		if (iRenderingMode != 1)
+			glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	}
+	else
+		return FALSE;
+	
+	GdkWindow* gdkwindow = gldi_container_get_gdk_window (pContainer ? pContainer : g_pPrimaryContainer);
+	gint scale = gdk_window_get_scale_factor (gdkwindow);
+	
+	// set up an ortho view ourselves
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(0, iWidth * scale, 0, iHeight * scale, 0.0, 500.0);
+	glViewport(0, 0, iWidth * scale, iHeight * scale);
+	
+	glMatrixMode (GL_MODELVIEW);
+	glLoadIdentity ();
+	glScalef (scale, scale, 1.f);
+	
+	if (s_bRedirected)  // adapt to the size of the redirected texture
+	{
+		glScalef ((double)s_iRedirectWidth/iWidth, (double)s_iRedirectHeight/iHeight, 1.);  // no need to revert the y-axis, since we'll apply the redirected texture on the image's texture, which will invert it.
+		glTranslatef (iWidth/2, iHeight/2, - iHeight/2);  // translate to the middle of the drawing space.
+	}
+	else
+	{
+		glScalef (1., -1., 1.);  // revert y-axis since texture are drawn reversed
+		glTranslatef (iWidth/2, -iHeight/2, - iHeight/2);  // translate to the middle of the drawing space.
+	}
+	
+	glColor4f (1., 1., 1., 1.);
+	
+	return TRUE;
+}
+
+void cairo_dock_end_draw_image_buffer_opengl (CairoDockImageBuffer *pImage, GldiContainer *pContainer)
+{
+	g_return_if_fail (pImage->iTexture != 0);
+	
+	gboolean bResetView = FALSE;
+	
+	if (pContainer && CAIRO_DOCK_IS_DESKLET (pContainer))
+	{
+		// copy in our texture
+		_cairo_dock_enable_texture ();
+		_cairo_dock_set_blend_source ();
+		_cairo_dock_set_alpha (1.);
+		glBindTexture (GL_TEXTURE_2D, pImage->iTexture);
+		
+		int iWidth, iHeight;  // texture' size
+		iWidth = pImage->iTexWidth, iHeight = pImage->iTexHeight;
+		int x = 0; // (pContainer->iWidth - iWidth)/2;
+		int y = 0; // (pContainer->iHeight - iHeight)/2;
+		glCopyTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA, x, y, iWidth, iHeight, 0);  // target, num mipmap, format, x,y, w,h, border.
+		
+		_cairo_dock_disable_texture ();
+		
+		bResetView = TRUE;
+	}
+	else if (s_iFboId != 0)
+	{
+		if (s_bRedirected)  // copy in our texture
+		{
+			glFramebufferTexture2DEXT (GL_FRAMEBUFFER_EXT,
+				GL_COLOR_ATTACHMENT0_EXT,
+				GL_TEXTURE_2D,
+				pImage->iTexture,
+				0);  // now we draw in icon's texture.
+			_cairo_dock_enable_texture ();
+			_cairo_dock_set_blend_source ();
+			
+			int iWidth, iHeight;  // texture' size
+			iWidth = pImage->iWidth, iHeight = pImage->iHeight;
+			
+			glLoadIdentity ();
+			glTranslatef (iWidth/2, iHeight/2, - iHeight/2);
+			_cairo_dock_apply_texture_at_size_with_alpha (s_iRedirectedTexture, iWidth, iHeight, 1.);
+			
+			_cairo_dock_disable_texture ();
+			s_bRedirected = FALSE;
+		}
+		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);  // switch back to window-system-provided framebuffer
+		glFramebufferTexture2DEXT (GL_FRAMEBUFFER_EXT,
+			GL_COLOR_ATTACHMENT0_EXT,
+			GL_TEXTURE_2D,
+			0,
+			0);  // we detach the texture (precaution).
+		//glGenerateMipmapEXT(GL_TEXTURE_2D);  // if we use mipmaps, we need to explicitely generate them when using FBO.
+		
+		bResetView = !s_bOffscreen;
+	}
+	
+	if (bResetView && pContainer)
+	{
+		// have to reset the container's view, since we messed it up
+		if (pContainer->bPerspectiveView) gldi_gl_container_set_perspective_view (pContainer);
+		else gldi_gl_container_set_ortho_view (pContainer);
+	}
+}
+
+void cairo_dock_image_buffer_update_texture (CairoDockImageBuffer *pImage)
+{
+	if (pImage->iTexture == 0)
+	{
+		pImage->iTexture = cairo_dock_create_texture_from_surface_full (pImage->pSurface,
+			&pImage->iTexWidth, &pImage->iTexHeight);
+	}
+	else
+	{
+		_cairo_dock_enable_texture ();
+		_cairo_dock_set_blend_source ();
+		_cairo_dock_set_alpha (1.);  // full white
+		
+		int w = cairo_image_surface_get_width (pImage->pSurface);  // extra caution
+		int h = cairo_image_surface_get_height (pImage->pSurface);
+		glBindTexture (GL_TEXTURE_2D, pImage->iTexture);
+		
+		glTexParameteri (GL_TEXTURE_2D,
+			GL_TEXTURE_MIN_FILTER,
+			g_bEasterEggs ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
+		if (g_bEasterEggs)
+			glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		
+		if (g_bEasterEggs)
+			gluBuild2DMipmaps (GL_TEXTURE_2D,
+				4,
+				w,
+				h,
+				GL_BGRA,
+				GL_UNSIGNED_BYTE,
+				cairo_image_surface_get_data (pImage->pSurface));
+		else
+			glTexImage2D (GL_TEXTURE_2D,
+				0,
+				4,  // GL_ALPHA / GL_BGRA
+				w,
+				h,
+				0,
+				GL_BGRA,  // GL_ALPHA / GL_BGRA
+				GL_UNSIGNED_BYTE,
+				cairo_image_surface_get_data (pImage->pSurface));
+		_cairo_dock_disable_texture ();
+	}
+}
+
+
+cairo_surface_t *cairo_dock_image_buffer_copy_scale (CairoDockImageBuffer *pImage, int iWidth, int iHeight)
+{
+	if (iWidth <= 0 || iHeight <= 0) return NULL;
+	if (pImage->iWidth > 0 && pImage->iHeight > 0 && pImage->pSurface != NULL)
+	{
+		// note: this will use iWidth and iHeight as a logical size and use the same
+		// device scale factor as our surface
+		cairo_surface_t *surface = cairo_surface_create_similar (pImage->pSurface,
+			CAIRO_CONTENT_COLOR_ALPHA, iWidth, iHeight);
+		cairo_t *pCairoContext = cairo_create (surface);
+		cairo_scale (pCairoContext, (double)iWidth/pImage->iWidth, (double)iHeight/pImage->iHeight);
+		cairo_set_source_surface (pCairoContext, pImage->pSurface, 0., 0.);
+		cairo_paint (pCairoContext);
+		cairo_destroy (pCairoContext);
+		return surface;
+	}
+	else return NULL;
+}
+

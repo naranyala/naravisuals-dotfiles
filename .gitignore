@@ -1,0 +1,7 @@
+
+
+fresh-install/bin
+dot-config-opencode/node_modules
+
+**/node_modules
+

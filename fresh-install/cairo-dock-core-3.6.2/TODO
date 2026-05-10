@@ -1,0 +1,93 @@
+====================================================
+                    NEW RELEASE
+====================================================
+
+For each new version:
+	* Bump dock's version (CMakeLists.txt - Core & Plug-ins)
+	* Check the link to third-party applets' website:
+		- src/cairo-dock-gui-commons.c:136:#define DISTANT_DIR "3.3.0"
+		- ../cairo-dock-plug-ins/Dbus/src/applet-dbus.c:55:#define DISTANT_DIR "3.3.0"
+	* Check the link to theme dir on the server:
+		- CMakeList.txt:134: set (CAIRO_DOCK_DISTANT_THEMES_DIR "themes3.1")
+	* Remove useless g_print
+	* Check the ChangeLog file
+	* Update doc on doc.glx-dock.org
+	* Update translations: cd po/misc && ./update-translations.sh -cpt
+	* Update desktop-files: cd po/misc && ./update-desktop-files.sh
+	* Update list.conf file from third-party dir.
+
+
+====================================================
+                 BEFORE THE RELEASE
+====================================================
+
+3.0:
+  ** Must-Be-Done **
+	- crash: Unity-4 -> DustSand -> Clear -> Humanity -> Unity-4
+	- cairo-dock-gui-themes.c:111 -> cairo-dock-gui-manager.c:414
+	- cairo-dock-applications-manager.c:1663 -> cairo-dock-class-manager.c:66
+	- indicators on different icon sizes
+	- slide view view: separator & scrollbar in vertical mode, last line out of the dock in horizontal mode
+	- cairo_dock_get_pixbuf_from_pixmap: assertion `pIconPixbuf != NULL' failed
+	- drop/hover indicators on different icon sizes
+	- cairo_dock_get_max_scale & fMagnitudeMax must die
+	- check Notification Area, there might be a bug (bitecoin, litecoin, skype)
+	- make some tests with the Dbus API and sub-docks / tmp launcher
+	- PM: crash when no battery is plugged ?
+  ** That-Would-Be-Nice **
+	- add a parameter for sub-dock icon size?
+	- redirection texture: make it per-container, or use the container gl buffer instead
+	- Slide view: allow to use the same borders as default (radius, color, width)
+	- Dialogs: allow to use the same borders as default (radius, color)
+	- let the view place the X thumbnail
+	- get rid of CAIRO_DOCK_IS_DOCK
+	- Icon bg: add ratio
+	- Default theme more consistent
+	- Recent Events: handle recent apps
+	- Firefox launcher: handle recent URLs
+	- check for config panel (g_object_unref assertion)
+	- review Help hints
+	- find Kwin/XFCE versions of gnome-control-center and KWin config tool for Composite-manager
+	- draw a preview of the dock in opengl
+	- display Help GUI in simple mode
+	- kde integration ++
+	- stack: enable iSubdockViewType
+	- link launchers with class+command
+
+3.1:
+	- an appli icon loaded before being inserted in a dock !
+	- add "add an applet" in the menu
+	- Dbus: third-party applets: allow to load applets from a local archive (when dropped between 2 icons).
+	- when an icon in a sub-dock demands attention, also animate the icon in the main dock.
+	- search in Recent-Events' dialog (seems like libzeitgeist is buggy)
+	- taskbar: separator as an option -> test
+	- taskbar, minimized windows only: when restored, an appli icon gets the "?" for a second before disappearing
+	- Twitter: when a new entry apears in the timeline, have to click on the applet to stop the animation (doesn't stop from the menu).
+	- image buffer: draw the surface from the center, like the texture.
+	- Icons: use an image buffer + a request size.
+	- add a function cairo_dock_render_one_icon_in_desklet_opengl().
+	- gauge with images: improve transition
+	- GUI: current items: don't allow the "delete" menu on the main dock
+	- old systray seems broken once again :-/
+
+all:
+	- Remove GCC warnings
+	- (try to only use temporally g_print functions ;) )
+	- Complete the ChangeLog file
+
+	static int r=0;
+	if (!r)
+	{
+		Screen *scr = XDefaultScreenOfDisplay (s_XDisplay);
+		Visual *visual = DefaultVisualOfScreen (scr);
+		cairo_surface_t * s = cairo_xlib_surface_create (s_XDisplay,
+                                                         cairo_dock_get_root_id(),
+                                                         visual,
+                                                         g_desktopGeometry.iXScreenWidth[CAIRO_DOCK_HORIZONTAL], g_desktopGeometry.iXScreenHeight[CAIRO_DOCK_HORIZONTAL]);
+		if (s)
+		{
+			cairo_surface_write_to_png (s, "/tmp/screenshot.png");
+			cairo_surface_destroy (s);
+		}
+		r=1;
+	}

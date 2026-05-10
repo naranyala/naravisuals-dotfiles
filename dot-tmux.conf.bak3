@@ -1,0 +1,29 @@
+e Ctrl-a as prefix instead of default Ctrl-b
+unbind C-b
+set-option -g prefix C-a
+bind-key C-a send-prefix
+
+# Enable mouse support
+set -g mouse on
+
+# Split panes with | and -
+bind | split-window -h
+bind - split-window -v
+
+# Easier pane navigation
+bind h select-pane -L
+bind j select-pane -D
+bind k select-pane -U
+bind l select-pane -R
+
+# Status bar styling
+set -g status-bg colour235
+set -g status-fg white
+set -g status-left-length 40
+set -g status-right-length 100
+set -g status-left "#[fg=green]#S #[fg=yellow]| #[fg=cyan]%Y-%m-%d %H:%M"
+set -g status-right "#[fg=magenta]#(whoami) #[fg=blue]| #[fg=red]%H:%M"
+
+# Better history
+set -g history-limit 10000
+
