@@ -25,6 +25,8 @@ echo "✅ Using $PKG_MANAGER package manager..."
 # Unified package list
 PACKAGES=(
     btop neovim fastfetch bat git
+    fzf ripgrep
+    chromium
     kitty tmux
     gcc g++ make cmake
     pkg-config
@@ -33,9 +35,11 @@ PACKAGES=(
     python3 python3-pip
     nodejs npm
     openssl
-    blender inkscape ncdu 
-    kdenlive vlc
+    # blender inkscape
+    ncdu
+    # kdenlive vlc
     ntfsfix ntfs-3g
+
 )
 
 # Function to clear stale locks

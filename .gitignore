@@ -1,6 +1,8 @@
 
 
 fresh-install/bin
+fresh-install/fpm
+
 dot-config-opencode/node_modules
 
 **/node_modules
